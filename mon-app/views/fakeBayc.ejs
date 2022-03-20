@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+    <%- include('layouts/header'); -%>
+    <body>
+        <%- include('layouts/navbar'); -%>
+        <!-- Page Header-->
+        <header class="masthead" style="background-image: url('img/prod3.jpg')">
+            <div class="container position-relative px-4 px-lg-5">
+                <div class="row gx-4 gx-lg-5 justify-content-center">
+                    <div class="col-md-10 col-lg-8 col-xl-7">
+                        <div class="site-heading">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content-->
+        <head>
+            <link
+              href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css"
+              rel="stylesheet"
+            />
+            <script
+              src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.6.1/web3.min.js"
+              integrity="sha512-5erpERW8MxcHDF7Xea9eBQPiRtxbse70pFcaHJuOhdEBQeAxGQjUwgJbuBDWve+xP/u5IoJbKjyJk50qCnMD7A=="
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer"
+            ></script>
+          </head>
+          
+          <body class="h-full">
+            <div
+              class="
+                flex
+                w-full
+                h-full
+                justify-center
+                content-center
+                items-center
+                space-x-4
+              "
+            >
+              <div class="flex flex-col space-y-6">
+                <h3 class="text-center">Fakebayc</h3>
+                <div class="flex flex-col space-y-2">
+                  <button
+                    onclick="loginWithEth()"
+                    class="
+                    bg-gray
+                    border border-black
+                    hover:bg-red
+                    py-2
+                    px-4
+                    text-gray-600
+                    hover:text-red
+                    "
+                  >
+                    Login
+                  </button>
+                  <p id="userAddress" class="text-black"></p>
+                  <button
+                    id="logoutButton"
+                    onclick="logout()"
+                    class="hidden text-red-800 underline"
+                  >
+                    Logout
+                  </button>
+                </div>
+                <button
+                  id="getContractInfo"
+                  onclick="getContractSymbol()"
+                  class="bg-red-300 hover:bg-blue-700 py-2 px-4 text-white"
+                >
+                Get Contract Ticker
+                <button
+                id="getBalanceOf"
+                onclick="getBalanceOf()"
+                class="bg-red-300 hover:bg-blue-700 py-2 px-4 text-white"
+                >
+                  Get Contract Balance
+                </button>
+                <button
+                id="MintNFT"
+                onclick="MintNFT()"
+                class="bg-red-300 hover:bg-blue-700 py-2 px-4 text-white"
+                >
+                  Mint NFTree
+                </button>
+
+                <button
+                id="View NFT"
+                onclick="window.location.href='/fakeBayc/1'"
+                class="bg-red-300 hover:bg-blue-700 py-2 px-4 text-white"
+                >
+                  View my NFT
+                </button>
+                <button
+                id="View ID"
+                onclick="getBalanceId()"
+                class="bg-red-300 hover:bg-blue-700 py-2 px-4 text-white"
+                >
+                  My List ID token
+                </button>
+                <div id="ID"></div>
+                <button
+                id="getBalanceOf"
+                onclick="infoToken()"
+                class="bg-red-300 hover:bg-blue-700 py-2 px-4 text-white"
+                >
+                  See my NFT
+                </button>
+                <div id="metadata"></div>
+                <div id="image"></div>
+                <div class="flex flex-col space-y-2"></div>
+              </div>
+            </div>
+            <%- include('commun/connect'); -%>
+            <script>
+              // Use this function to turn a 42 character ETH address
+              // into an address like 0x345...12345
+              function truncateAddress(address) {
+                if (!address) {
+                  return "";
+                }
+                return `${address.substr(0, 5)}...${address.substr(
+                  address.length - 5,
+                  address.length
+                )}`;
+              }
+          
+              // Display or remove the users know address on the frontend
+              function showAddress() {
+                if (!window.userAddress) {
+                  document.getElementById("userAddress").innerText = "";
+                  document.getElementById("logoutButton").classList.add("hidden");
+                  return false;
+                }
+          
+                document.getElementById(
+                  "userAddress"
+                ).innerText = `ETH Address: ${window.userAddress}`;
+                document.getElementById("logoutButton").classList.remove("hidden");
+              }
+          
+              // remove stored user address and reset frontend
+              function logout() {
+                window.userAddress = null;
+                window.localStorage.removeItem("userAddress");
+                showAddress();
+              }
+          
+              // Login with Web3 via Metamasks window.ethereum library
+              async function loginWithEth() {
+                if (window.web3) {
+                  try {
+                    // We use this since ethereum.enable() is deprecated. This method is not
+                    // available in Web3JS - so we call it directly from metamasks' library
+                    const selectedAccount = await window.ethereum
+                      .request({
+                        method: "eth_requestAccounts",
+                      })
+                      .then((accounts) => accounts[0])
+                      .catch(() => {
+                        throw Error("No account selected!");
+                      });
+                    window.userAddress = selectedAccount;
+                    window.localStorage.setItem("userAddress", selectedAccount);
+                    showAddress();
+                  } catch (error) {
+                    console.error(error);
+                  }
+                } else {
+                  alert("No ETH brower extension detected.");
+                }
+              }
+          
+              // Go to blockchain and get the contract symbol. Keep in mind
+              // YOU MUST BE CONNECT TO RINKEBY NETWORK TO USE THIS FUNCTION
+              // why -> because this specific contract address is on ethereum.
+              // When you click login, just make sure your network is Rinkeby and it will all workout.
+              async function getContractSymbol() {
+                const CONTRACT_ADDRESS = "0x6b740C7a965d75A4801642Fabc650DA92CeA47ef";
+                const contract = new window.web3.eth.Contract(
+                  window.ABI,
+                  CONTRACT_ADDRESS
+                );
+                const symbol = await contract.methods
+                  .symbol()
+                  .call({ from: window.userAddress });
+                alert(`Your contract address is ${CONTRACT_ADDRESS} Ticker : ${symbol}`);
+              }
+        
+              async function getBalanceOf() {
+                const CONTRACT_ADDRESS = "0x6b740C7a965d75A4801642Fabc650DA92CeA47ef";
+                const contract = new window.web3.eth.Contract(
+                  window.ABI,
+                  CONTRACT_ADDRESS
+                );
+                const balance = await contract.methods
+                  .balanceOf(window.userAddress)
+                  .call({ from: window.userAddress });
+                alert(`Your contract address is ${CONTRACT_ADDRESS} Balance : ${balance}`);
+              }
+        
+              async function MintNFT() {
+                const CONTRACT_ADDRESS = "0x6b740C7a965d75A4801642Fabc650DA92CeA47ef";
+                const contract = new window.web3.eth.Contract(
+                  window.ABI,
+                  CONTRACT_ADDRESS
+                );
+                const balance = await contract.methods
+                  .claimAToken()
+                  .send({ from: window.userAddress });
+                alert(`Your contract address is ${CONTRACT_ADDRESS} Your nftree has been claimed`);
+              }
+              var tableau = []
+              
+              async function getBalanceId() {
+                const change = document.getElementById("ID");
+                change.innerHTML = "Waiting of your ID token list";
+                const CONTRACT_ADDRESS = "0x6b740C7a965d75A4801642Fabc650DA92CeA47ef";
+                const contract = new window.web3.eth.Contract(
+                  window.ABI,
+                  CONTRACT_ADDRESS
+                );/*  */
+                var s = 1;
+                var i = 0;
+                tableau = []
+                while (s == 1 ) {
+                  console.log(i)
+                  try{
+                    const id = await contract.methods
+                    .tokenOfOwnerByIndex(window.userAddress, i)
+                    .call()
+                  console.log(typeof(id))
+                  tableau.push(parseInt(id));
+                  console.log(tableau);
+                  }catch(error){
+                    s = 0;
+                    console.log("ici")
+                    const change = document.getElementById("ID");
+                    change.innerHTML = "Your Id Token : " + tableau;
+                  }
+                  i = i + 1;
+                }              
+              }
+
+              async function infoToken() {
+                //console.log("infoToken run")
+                var id = "<%= idiii %>"
+                if (id == "undifened"){
+                  console.log('not defined')
+                  const changemeta = document.getElementById("metadata");
+                  changemeta.innerHTML = "Enter an ID in the URL";
+                }else{
+                  console.log(tableau)
+
+                  if(tableau == ""){
+                    console.log('ok')
+                    const changemeta = document.getElementById("metadata");
+                    changemeta.innerHTML = "Clic on My List ID token";
+                  }else{
+                  
+                  console.log("Our array : " +tableau);
+                  console.log("Our id : " +id);
+                  tableau.forEach(elements => {
+                    
+                    
+                    if(elements == id){
+                      //console.log(id)
+                      var URL = "https://gateway.pinata.cloud/ipfs/QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/"+id
+                      var baseURL = "https://gateway.pinata.cloud/ipfs/"
+                      try{
+                        var httpRequest = new XMLHttpRequest();
+                        httpRequest.open('GET', URL, true);
+                        httpRequest.responseType = "json"
+                        httpRequest.send()
+                        httpRequest.onload = function(){
+                        if (httpRequest.status != 200){
+                            alert("Error " + httpRequest.status + " : " + httpRequest.statusText);
+                        }else{ 
+                          var result = JSON.stringify(httpRequest.response);
+                          //console.log(result)
+                          result = JSON.parse(result, "$.attributes[*]");
+                          result.image = result.image.slice(7)
+                          const change = document.getElementById("image");
+                          change.innerHTML = "Our NFT : <img src='" + baseURL + result.image + "'>";
+                          //console.log(result.attributes[0].trait_type)
+                          var metadata = [];
+                          result.attributes.forEach(value => {
+                            //console.log(value.trait_type, value.value);
+                            metadata.push("<br>" + value.trait_type + " : " + value.value)
+                          });
+                          const changemeta = document.getElementById("metadata");
+                          changemeta.innerHTML = "Caracteristics : "+ metadata;
+                          reussi = 1
+                        }
+                        };
+                        }catch(error){
+
+                        }
+
+                      }else{
+                        const changemeta = document.getElementById("metadata");
+                        changemeta.innerHTML = "Enter your ID nouber in the URL of your My ID Token List";
+                      }
+
+              })
+
+            }
+              }
+              }
+            </script>
+          </body>
+        <%- include('ABI/fakeBayc'); -%>
+        <%- include('layouts/footer'); -%>
+        <%- include('layouts/scripts'); -%>
+    </body>
+</html>
