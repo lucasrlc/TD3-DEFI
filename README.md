@@ -6,7 +6,7 @@ Samuel BARBARIN
 ## to run the website in local
 
 ```node
-cd ux
+cd mon-app
 ```
 
 and see readme
